@@ -8,6 +8,7 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  showGraph: boolean, // IState is an interface, meaning anything that implements IState would be a valid graph.
 }
 
 /**
@@ -22,6 +23,7 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false, //we want this is be initialized as false so it is hidden before we press stream data
     };
   }
 
@@ -29,18 +31,29 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    if(this.state.showGraph){ //only render graph when showGraph state is true
+      return (<Graph data={this.state.data}/>)
+    }
+    // return (<Graph data={this.state.data}/>)
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const retrieveInterval = setInterval(()=> {
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        // Update the state by creating a new array of data that consists of
+        // Previous data in the state and the new data from server
+        this.setState({
+          data: serverResponds,
+          showGraph: true,
+        });
+      });
+      x++;
+      if(x > 1000) clearInterval(retrieveInterval);
+    }, 100);
   }
 
   /**
